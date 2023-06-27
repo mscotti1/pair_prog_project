@@ -1,14 +1,17 @@
 import requests
 import json
 
-url = "https://api.weather.gov/"
-ex_forecast = "points/40.678177,-73.944160"
-ex_forecast = "points/42.0345,-93.6203"
 
-ex_alerts = "alerts/active?area=KS"
-response = requests.get(url+ex_forecast)
 
-# response = requests.get(url+ex_alerts)
-# print(response)
-# print(json.dumps(response.json(), indent=3))
+key = "3c978d81b1e84cfc836183128232706"
+zipcode = input("Enter your zipcode:")
+url = "https://api.weatherapi.com/v1/future.json?key=" + key + "&q=" + zipcode + "&dt=2023-07-28"
+
+
+response = requests.get(url)
+
+
+print(json.dumps(response.json(),indent=3))
+
+
 
