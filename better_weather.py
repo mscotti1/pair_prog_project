@@ -1,10 +1,10 @@
 import requests
 import json
 
-key = "3c978d81b1e84cfc836183128232706"
+key = "?key=3c978d81b1e84cfc836183128232706"
 url = "https://api.weatherapi.com/v1/"
 time = "current.json"
-url_key = url + time + "?key=" + key
+url_key = url + time + key
 
 def weather_getter(zip):
     url =  url_key + "&q=" + zip
