@@ -15,8 +15,8 @@ def weather_getter(zip):
     # add alerts
     # try to get date from data
 
-# This function returns the date n days forward
-def get_future_date(num):
+# This function returns the date n days forward or backwards
+def get_new_date(num):
      new_date = datetime.datetime.now()
      new_date += datetime.timedelta(days=num)
      return new_date
@@ -31,10 +31,10 @@ def main():
     # current_date is a global variable for current date
     print(get_date_str(current_date))
 
-    # Place holder for future date
-    future_date = get_future_date(4)
+    # Place holder for new date
+    new_date = get_new_date(4)
     # print out future date using get_date_str
-    print(get_date_str(future_date))
+    print(get_date_str(new_date))
 
     zipcode = input("Enter your zipcode: ")
     weather_getter(zipcode)
@@ -42,8 +42,10 @@ def main():
     # History has to be on or after Jan 1st 2010
     # Future has to be at leat 14 days into the future
     time_range = input("How many days in the future (at least 14)? ")
-   
-    url = "https://api.weatherapi.com/v1/future.json?key=" + key[5:] + "&q=" + zipcode + "&dt=2023-07-11"
+    new_date = get_new_date(int(time_range))
+    str_nd = get_date_str(new_date)
+    
+    url = "https://api.weatherapi.com/v1/future.json" + key + "&q=" + zipcode + "&dt=" + str_nd
 
 
     response = requests.get(url)
