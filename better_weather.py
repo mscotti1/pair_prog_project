@@ -42,7 +42,7 @@ def main():
 
     zipcode = input("Enter your zipcode: ")
     weather_getter(zipcode)
-    # Print out current forecast and then ask if they want anymore 
+    # Print out current forecast and then ask if they want anymore
     # data from future or past days
     # History has to be on or after Jan 1st 2010
     # Future has to be at leat 14 days into the future
