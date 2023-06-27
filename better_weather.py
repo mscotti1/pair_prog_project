@@ -8,22 +8,26 @@ time = "current.json"
 url_key = url + time + key
 current_date = datetime.datetime.now()
 
+
 def weather_getter(zip):
-    url =  url_key + "&q=" + zip
+    url = url_key + "&q=" + zip
     response = requests.get(url)
-    print(json.dumps(response.json(),indent=3))
+    print(json.dumps(response.json(), indent=3))
     # add alerts
     # try to get date from data
 
-# This function returns the date n days forward or backwards
-def get_new_date(num):
-     new_date = datetime.datetime.now()
-     new_date += datetime.timedelta(days=num)
-     return new_date
 
-# This function returns string of date formatted YYYY-MM-DD
+def get_new_date(num):
+    # This function returns the date n days forward or backwards
+    new_date = datetime.datetime.now()
+    new_date += datetime.timedelta(days=num)
+    return new_date
+
+
 def get_date_str(date):
+    # This function returns string of date formatted YYYY-MM-DD
     return str(date)[0:10]
+
 
 def main():
 
@@ -44,13 +48,12 @@ def main():
     time_range = input("How many days in the future (at least 14)? ")
     new_date = get_new_date(int(time_range))
     str_nd = get_date_str(new_date)
-    
-    url = "https://api.weatherapi.com/v1/future.json" + key + "&q=" + zipcode + "&dt=" + str_nd
 
+    url = "https://api.weatherapi.com/v1/future.json" + \
+        key + "&q=" + zipcode + "&dt=" + str_nd
 
     response = requests.get(url)
-    print(json.dumps(response.json(),indent=3))
+    print(json.dumps(response.json(), indent=3))
+
 
 main()
-
-
