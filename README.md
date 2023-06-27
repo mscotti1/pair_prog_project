@@ -24,5 +24,5 @@ Weather inquisitors
 * display data
 * display suggestions based on data
 
-
+![badge not working for style checker](https://github.com/mscotti1/pair_prog_project/actions/workflows/styleCheck.yaml/badge.svg)
 
