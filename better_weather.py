@@ -37,6 +37,7 @@ def main():
     # Uses get_date_str to print date formatted YYYY-MM-DD
     # current_date is a global variable for current date
     print(get_date_str(current_date))
+    print(current_date.strftime("%a"))
 
     # Place holder for new date
     new_date = get_new_date(4,1)
