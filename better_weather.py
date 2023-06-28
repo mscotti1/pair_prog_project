@@ -17,10 +17,13 @@ def weather_getter(zip):
     # try to get date from data
 
 
-def get_new_date(num):
+def get_new_date(num, porf):
     # This function returns the date n days forward or backwards
     new_date = datetime.datetime.now()
-    new_date += datetime.timedelta(days=num)
+    if porf == 1:
+        new_date += datetime.timedelta(days=num)
+    elif porf == 2:
+        new_date -= datetime.timedelta(days=num)
     return new_date
 
 
@@ -36,7 +39,7 @@ def main():
     print(get_date_str(current_date))
 
     # Place holder for new date
-    new_date = get_new_date(4)
+    new_date = get_new_date(4,1)
     # print out future date using get_date_str
     print(get_date_str(new_date))
 
@@ -46,12 +49,39 @@ def main():
     # data from future or past days
     # History has to be on or after Jan 1st 2010
     # Future has to be at leat 14 days into the future
-    time_range = input("How many days in the future (at least 14)? ")
-    new_date = get_new_date(int(time_range))
-    str_nd = get_date_str(new_date)
+    porf = int(input("Would you like data from the future(1) or the past(2), if neither 0: "))
+    if porf == 1:
+        time_range = int(input("How many days in the future (at least 14)? "))
 
-    url = "https://api.weatherapi.com/v1/future.json" + \
-        key + "&q=" + zipcode + "&dt=" + str_nd
+        new_date = get_new_date(time_range, porf)
+        str_nd = get_date_str(new_date)
+
+        url = "https://api.weatherapi.com/v1/future.json" + \
+            key + "&q=" + zipcode + "&dt=" + str_nd
+    elif porf == 2:
+        time_range = int(input("How many days in the past (no earlier than 2010-01-01)? "))
+
+        new_date = get_new_date(time_range, porf)
+        str_nd = get_date_str(new_date)
+
+        url = "https://api.weatherapi.com/v1/history.json" + \
+            key + "&q=" + zipcode + "&dt=" + str_nd
+    elif porf == 0:
+        time_range = 0
+    else:
+        porf = int(input("Please input future(1), the past(2), or neither(0): "))
+    
+    # new_date = get_new_date(int(time_range))
+    # str_nd = get_date_str(new_date)
+
+    # url = "https://api.weatherapi.com/v1/future.json" + \
+    #     key + "&q=" + zipcode + "&dt=" + str_nd
+
+    others = input("Would you like information about the tides, moon cycle, etc? (y or n)")
+    if others == 'y':
+        print("@Kalem do we want to ask about this and then output stuff? Or are we just parsing the data and printing out everything?")
+    if others == 'n':
+        print("@Klaem how would you like to incorporate a database? Also would you like to add the option to just put the date in the future or past instead of the days?")
 
     response = requests.get(url)
     print(json.dumps(response.json(), indent=3))
