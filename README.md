@@ -1,4 +1,4 @@
-# Better Weather 
+# Whenever Weather 
 ## Overview
 A terminal-based app that takes the input of latitude and longitude that outputs the forecast for the week with the correlating values.
 ## Audience
@@ -16,7 +16,7 @@ Weather inquisitors
     * Python
     * YAML
 * API: 
-    * https://www.weather.gov/documentation/services-web-api
+    * https://api.weatherapi.com/v1/
 
 ## Operations:
 * get input and get data
