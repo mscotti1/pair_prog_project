@@ -44,10 +44,17 @@ def database_porf(zipcode, date, porf):
     data_location = data_location.applymap(json.dumps)
     data_forecast_day = data_forecast_day.applymap(json.dumps)
     data_astro = data_astro.applymap(json.dumps)
+    data_astro = [data_astro[i] for i in data_astro]
+    print(data_astro)
+
+    headers = ['sunrise', 'sunset', 'moonrise', 'moonset', 'moonphase', 'moonillumination']
+    print("testing table print")
+    print(print(pd.DataFrame(data_astro, headers)))
+    print("test done")
 
     data_location.to_sql('location', con=engine, if_exists='replace', index=False)
     data_forecast_day.to_sql('day', con=engine, if_exists='replace', index=False)
-    data_astro.to_sql('astro', con=engine, if_exists='replace', index=False)
+    # data_astro.to_sql('astro', con=engine, if_exists='replace', index=False)
 
     with engine.connect() as connection:
         query_result = connection.execute(db.text("SELECT * FROM location;")).fetchall()
@@ -56,9 +63,9 @@ def database_porf(zipcode, date, porf):
         query_result = connection.execute(db.text("SELECT * FROM day;")).fetchall()
         print(pd.DataFrame(query_result))
         print("Done2")
-        query_result = connection.execute(db.text("SELECT * FROM astro;")).fetchall()
-        print(pd.DataFrame(query_result))
-        print("Done3")
+        # query_result = connection.execute(db.text("SELECT * FROM astro;")).fetchall()
+        # print(pd.DataFrame(query_result))
+        # print("Done3")
 
     data_hour = pd.DataFrame()
     if porf == 1:
@@ -97,7 +104,7 @@ def database_creater(zipcode, time_range, hour):
 
     response = requests.get(url_database)
     week_forecast = response.json()
-    # print(json.dumps(response.json(), indent=3))
+    print(json.dumps(response.json(), indent=3))
     # creat_engine - creates an engine; need kind of sql and name of database; enginee needs to be connected to database
     engine = db.create_engine('sqlite:///thisWeek.db')
 
@@ -133,7 +140,6 @@ def database_creater(zipcode, time_range, hour):
         print("DONE2")
         for j in range(time_range):
             query_result = connection.execute(db.text("SELECT * FROM day" + str(j) + ";")).fetchall()
-            # query_result = connection.execute(db.text("SELECT * FROM day2;")).fetchall()
             print(pd.DataFrame(query_result))
             print("DONE_", j)
             query_result = connection.execute(db.text("SELECT * FROM astro" + str(j) + ";")).fetchall()
