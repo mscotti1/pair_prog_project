@@ -4,106 +4,150 @@ import datetime
 import pandas as pd
 import sqlalchemy as db
 
+# [sunny, partly cloudy, cloudy, raining, snowing, thunderstorm, blizard?, hurricane?, tsunami?, tornado?, typhoon?, drought?, earthquake?]
 key = "?key=3c978d81b1e84cfc836183128232706"
 url = "https://api.weatherapi.com/v1/"
 time = "current.json"
 url_key = url + time + key
 current_date = datetime.datetime.now()
+zipcode = 11234
+time_range = 3
+hours = 12
+datep = "2023-06-01"
+datef = "2023-07-25"
 
-# cols = ["weather", "temp", "wind", "moon"]
-data_this_week = pd.DataFrame() # creates empty DataFrame
-data_2 = pd.DataFrame()
-#{location, current, forecast[forecastday[day, astro, hour]]}
-data_location = pd.DataFrame()
-data_current = pd.DataFrame()
-data_forecast = pd.DataFrame()
-data_forecast_day = pd.DataFrame()
-data_astro = pd.DataFrame()
-data_hour = pd.DataFrame()
+# future automatically does 3 hour intervals but history does every hour so I made history do 3 hour intervals as well just to match
 
-response = requests.get("https://api.weatherapi.com/v1/forecast.json?key=3c978d81b1e84cfc836183128232706&q=11234&days=2&hour=12")
-week_forecast = response.json()
+def database_porf(zipcode, date, porf):
+    # makes database for past or future date and uses 3 hour intervals
+    p = "history.json"
+    f = "future.json"
+    if porf == 1:
+        url_database = "https://api.weatherapi.com/v1/" + p + "?key=3c978d81b1e84cfc836183128232706"
+    elif porf == 2:
+        url_database = "https://api.weatherapi.com/v1/" + f + "?key=3c978d81b1e84cfc836183128232706"
+    
+    url_database += "&q=" + str(zipcode) + "&dt=" + date
+    response = requests.get(url_database)
+    data_porf= response.json()
+    # print(json.dumps(response.json(), indent=3))
+    engine = db.create_engine('sqlite:///history.db')
 
-print(json.dumps(response.json(), indent=3))
+    data_location = pd.DataFrame()
+    data_forecast_day = pd.DataFrame()
+    data_astro = pd.DataFrame()
 
-# json_normalize - standardizes everything (flattens json into DataFrame)
-# DataFrame.from_dict - take everything from the dictionary and makes it into the dataframe 
-data_this_week = pd.json_normalize(week_forecast['forecast']['forecastday'][0]['day']) 
-data_2 = pd.json_normalize(week_forecast['forecast']['forecastday'][1]['day'])
+    data_location = pd.json_normalize(data_porf['location'])
+    data_forecast_day = pd.json_normalize(data_porf['forecast']['forecastday'][0]['day']) 
+    data_astro = pd.json_normalize(data_porf['forecast']['forecastday'][0]['astro']) 
 
-data_location = pd.json_normalize(week_forecast['location']) 
-data_current = pd.json_normalize(week_forecast['current']) 
-data_forecast = pd.json_normalize(week_forecast['forecast']) 
-data_forecast_day = pd.json_normalize(week_forecast['forecast']['forecastday'][0]['day']) 
-data_astro = pd.json_normalize(week_forecast['forecast']['forecastday'][0]['astro']) 
-data_hour = pd.json_normalize(week_forecast['forecast']['forecastday'][0]['hour']) 
-data_forecast_day2 = pd.json_normalize(week_forecast['forecast']['forecastday'][1]['day'])
-data_astro2 = pd.json_normalize(week_forecast['forecast']['forecastday'][1]['astro']) 
-data_hour2 = pd.json_normalize(week_forecast['forecast']['forecastday'][1]['hour']) 
-# apply - applys fucntion to one column
-# applymap - allows you to apply a function to several columns
-data_this_week = data_this_week.applymap(json.dumps)
-data_location = data_location.applymap(json.dumps)
-data_current = data_current.applymap(json.dumps)
-data_forecast = data_forecast.applymap(json.dumps)
-data_forecast_day = data_forecast_day.applymap(json.dumps)
-data_astro = data_astro.applymap(json.dumps)
-data_hour = data_hour.applymap(json.dumps)
-# data_forecast_day2 = data_forecast_day2.applymap(json.dumps)
-# data_astro2 = data_astro2.applymap(json.dumps)
-# data_hour2 = data_hour2.applymap(json.dumps)
+    data_location = data_location.applymap(json.dumps)
+    data_forecast_day = data_forecast_day.applymap(json.dumps)
+    data_astro = data_astro.applymap(json.dumps)
 
-# creat_engine - creates an engine; need kind of sql and name of database; enginee needs to be connected to database
-engine = db.create_engine('sqlite:///thisWeek.db')
-# to_sql = converts database to sql
-# data_this_week.to_sql('thisWeek', con=engine, if_exists='replace', index=False)
+    data_location.to_sql('location', con=engine, if_exists='replace', index=False)
+    data_forecast_day.to_sql('day', con=engine, if_exists='replace', index=False)
+    data_astro.to_sql('astro', con=engine, if_exists='replace', index=False)
 
-data_location.to_sql('thisWeek', con=engine, if_exists='replace', index=False)
-data_current.to_sql('curr', con=engine, if_exists='replace', index=False)
-data_forecast.to_sql('cast', con=engine, if_exists='replace', index=False)
-data_forecast_day.to_sql('day', con=engine, if_exists='replace', index=False)
-data_astro.to_sql('astro', con=engine, if_exists='replace', index=False)
-data_hour.to_sql('hour', con=engine, if_exists='replace', index=False)
-data_forecast_day2.to_sql('day2', con=engine, if_exists='replace', index=False)
-data_astro2.to_sql('astro2', con=engine, if_exists='replace', index=False)
-data_hour2.to_sql('hour2', con=engine, if_exists='replace', index=False)
+    with engine.connect() as connection:
+        query_result = connection.execute(db.text("SELECT * FROM location;")).fetchall()
+        print(pd.DataFrame(query_result))
+        print("Done1")
+        query_result = connection.execute(db.text("SELECT * FROM day;")).fetchall()
+        print(pd.DataFrame(query_result))
+        print("Done2")
+        query_result = connection.execute(db.text("SELECT * FROM astro;")).fetchall()
+        print(pd.DataFrame(query_result))
+        print("Done3")
 
+    data_hour = pd.DataFrame()
+    if porf == 1:
+        for i in range(0,24,3):
+            data_hour = pd.json_normalize(data_porf['forecast']['forecastday'][0]['hour'][i]) 
+            data_hour = data_hour.applymap(json.dumps)
+            data_hour.to_sql('hour' + str(i), con=engine, if_exists='replace', index=False)
+            with engine.connect() as connection:
+                query_result = connection.execute(db.text("SELECT * FROM hour" + str(i) + ";")).fetchall()
+                print(pd.DataFrame(query_result))
+                print("Done HOUR: ", i)
+    elif porf == 2:
+        for i in range(0,8):
+            data_hour = pd.json_normalize(data_porf['forecast']['forecastday'][0]['hour'][i]) 
+            data_hour = data_hour.applymap(json.dumps)
+            data_hour.to_sql('hour' + str(i), con=engine, if_exists='replace', index=False)
+            with engine.connect() as connection:
+                query_result = connection.execute(db.text("SELECT * FROM hour" + str(i) + ";")).fetchall()
+                print(pd.DataFrame(query_result))
+                print("Done HOUR: ", i)
 
-# data_this_week = data_this_week.append(data_2, ignore_index=True)
-# connects engine to database
-with engine.connect() as connection:
-   query_result = connection.execute(db.text("SELECT * FROM thisWeek;")).fetchall()
-   print(pd.DataFrame(query_result))
-   print("DONE1")
-   query_result = connection.execute(db.text("SELECT * FROM curr;")).fetchall()
-   print(pd.DataFrame(query_result))
-   print("DONE2")
-   query_result = connection.execute(db.text("SELECT * FROM cast;")).fetchall()
-   print(pd.DataFrame(query_result))
-   print("DONE3")
-   query_result = connection.execute(db.text("SELECT * FROM day;")).fetchall()
-   print(pd.DataFrame(query_result))
-   print("DONE4")
-   query_result = connection.execute(db.text("SELECT sunrise FROM astro;")).fetchall()
-   print(pd.DataFrame(query_result))
-   query_result = connection.execute(db.text("SELECT sunset, moonrise FROM astro;")).fetchall()
-   print(pd.DataFrame(query_result).iloc[0,0])
-   print("DONE5")
-   query_result = connection.execute(db.text("SELECT * FROM hour;")).fetchall()
-   print(pd.DataFrame(query_result))
-   print("DONE6")
-   query_result = connection.execute(db.text("SELECT * FROM day2;")).fetchall()
-   print(pd.DataFrame(query_result))
-   print("DONE4")
-   query_result = connection.execute(db.text("SELECT sunrise FROM astro2;")).fetchall()
-   print(pd.DataFrame(query_result))
-   query_result = connection.execute(db.text("SELECT sunset, moonrise FROM astro2;")).fetchall()
-   print(pd.DataFrame(query_result).iloc[0,0])
-   print(pd.DataFrame(query_result).iloc[0,1])
-   print("DONE5")
-   query_result = connection.execute(db.text("SELECT * FROM hour2;")).fetchall()
-   print(pd.DataFrame(query_result))
-   print("DONE6")
+database_porf(zipcode, datep, 1)
+
+def database_creater(zipcode, time_range, hour):
+    # makes databases for current forecast (time range from 0-14 days) 
+    # does not have hour intervals but could add them if necessdary (right now chooses one hour of the day)
+    data_location = pd.DataFrame() # creates empty DataFrame
+    data_current = pd.DataFrame()
+    data_forecast = pd.DataFrame()
+    data_forecast_day = pd.DataFrame()
+    data_astro = pd.DataFrame()
+    data_hour = pd.DataFrame()
+
+    url_database = "https://api.weatherapi.com/v1/forecast.json?key=3c978d81b1e84cfc836183128232706"
+    url_database += "&q=" + str(zipcode) + "&days=" + str(time_range) + "&hour=" + str(hour)
+
+    response = requests.get(url_database)
+    week_forecast = response.json()
+    # print(json.dumps(response.json(), indent=3))
+    # creat_engine - creates an engine; need kind of sql and name of database; enginee needs to be connected to database
+    engine = db.create_engine('sqlite:///thisWeek.db')
+
+    # json_normalize - standardizes everything (flattens json into DataFrame)
+    # DataFrame.from_dict - take everything from the dictionary and makes it into the dataframe 
+    data_location = pd.json_normalize(week_forecast['location']) 
+    data_current = pd.json_normalize(week_forecast['current']) 
+    # apply - applys fucntion to one column
+    # applymap - allows you to apply a function to several columns
+    data_location = data_location.applymap(json.dumps)
+    data_current = data_current.applymap(json.dumps)
+    # to_sql = converts database to sql
+    data_location.to_sql('thisWeek', con=engine, if_exists='replace', index=False)
+    data_current.to_sql('curr', con=engine, if_exists='replace', index=False)
+    for i in range(time_range):
+        data_forecast_day = pd.json_normalize(week_forecast['forecast']['forecastday'][i]['day']) 
+        data_astro = pd.json_normalize(week_forecast['forecast']['forecastday'][i]['astro']) 
+        data_hour = pd.json_normalize(week_forecast['forecast']['forecastday'][i]['hour']) 
+        data_forecast_day = data_forecast_day.applymap(json.dumps)
+        data_astro = data_astro.applymap(json.dumps)
+        data_hour = data_hour.applymap(json.dumps)
+        data_forecast_day.to_sql('day' + str(i), con=engine, if_exists='replace', index=False)
+        data_astro.to_sql('astro' + str(i), con=engine, if_exists='replace', index=False)
+        data_hour.to_sql('hour' + str(i), con=engine, if_exists='replace', index=False)
+
+    # connects engine to database
+    with engine.connect() as connection:
+        query_result = connection.execute(db.text("SELECT * FROM thisWeek;")).fetchall()
+        print(pd.DataFrame(query_result))
+        print("DONE1")
+        query_result = connection.execute(db.text("SELECT * FROM curr;")).fetchall()
+        print(pd.DataFrame(query_result))
+        print("DONE2")
+        for j in range(time_range):
+            query_result = connection.execute(db.text("SELECT * FROM day" + str(j) + ";")).fetchall()
+            # query_result = connection.execute(db.text("SELECT * FROM day2;")).fetchall()
+            print(pd.DataFrame(query_result))
+            print("DONE_", j)
+            query_result = connection.execute(db.text("SELECT * FROM astro" + str(j) + ";")).fetchall()
+            print(pd.DataFrame(query_result))
+            query_result = connection.execute(db.text("SELECT sunset, moonrise FROM astro" + str(j) + ";")).fetchall()
+            print(pd.DataFrame(query_result))
+            # print(pd.DataFrame(query_result).iloc[0,0])
+            # print(pd.DataFrame(query_result).iloc[0,1])
+            print("DONE_", j)
+            query_result = connection.execute(db.text("SELECT * FROM hour" + str(j) + ";")).fetchall()
+            print(pd.DataFrame(query_result))
+            print("DONE_", j)
+
+# database_creater(11234, 3, 12)
 
 def weather_getter(zip):
     url = url_key + "&q=" + zip
@@ -166,7 +210,7 @@ def main():
     elif porf == 0:
         time_range = 0
     else:
-        porf = int(input("Please input future(1), the past(2), or neither(0): "))
+        porf = int(input("Please input the past(1), future(2), or neither(0): "))
     
     # new_date = get_new_date(int(time_range))
     # str_nd = get_date_str(new_date)
