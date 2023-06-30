@@ -14,11 +14,18 @@ current_date = datetime.datetime.now()
 zipcode = 11234
 time_range = 3
 hours = 12
+datec = "2023-06-29"
 datep = "2023-06-01"
 datef = "2023-07-25"
 
-def database_astro(zipcode):
-    url = "https://api.weatherapi.com/v1/astronomy.json?key=3c978d81b1e84cfc836183128232706" + "&q=" + str(zipcode)
+def get_date_str(date):
+    # This function returns string of date formatted YYYY-MM-DD
+    return str(date)[0:10]
+
+
+def database_astro(zipcode, date):
+    date = get_date_str(date)
+    url = "https://api.weatherapi.com/v1/astronomy.json?key=3c978d81b1e84cfc836183128232706" + "&q=" + str(zipcode) + "&dt=" + date
     response = requests.get(url)
     # print(json.dumps(response.json(), indent=3))
     astronomy = response.json()
@@ -33,7 +40,40 @@ def database_astro(zipcode):
     print(test[starts:])
     print('\n')
 
+database_astro(11234, datec)
 
+def database_alerts(zipcode):
+    url_database = "https://api.weatherapi.com/v1/forecast.json?key=3c978d81b1e84cfc836183128232706"
+    url_database += "&q=" + str(zipcode)  + "&alerts=yes"
+    # + "&dt=" + date
+    response = requests.get(url_database)
+    # print(json.dumps(response.json(), indent=3))
+    alerts = response.json()
+    data_alerts = pd.DataFrame()
+    # data_alerts = pd.json_normalize(akerts['astronomy']['astro'])
+
+    # data_alerts = data_alerts.applymap(json.dumps)
+
+database_alerts(11234)
+
+def database_aqi(zipcode):
+    url_database = "https://api.weatherapi.com/v1/forecast.json?key=3c978d81b1e84cfc836183128232706"
+    url_database += "&q=" + str(zipcode) + "&aqi=yes"
+    response = requests.get(url_database)
+    # print(json.dumps(response.json(), indent=3))
+    aqi = response.json()
+    data_aqi = pd.DataFrame()
+    data_aqi = pd.json_normalize(aqi['current']['air_quality'])
+
+    data_aqi = data_aqi.applymap(json.dumps)
+    data_aqi = [data_aqi[i] for i in data_aqi]
+    headers = ["co", "no2", "o3", "so2", "pm2_5", "pm10", "us-epa-index", "gb-defra-index"]
+    test = str(pd.DataFrame(data_aqi, headers))
+    starts = test.find('0') +1
+    print(test[starts:])
+    print('\n')
+
+database_aqi(11234)
 # future automatically does 3 hour intervals but history does every hour so I made history do 3 hour intervals as well just to match
 
 def database_porf(zipcode, date, porf):
@@ -47,6 +87,7 @@ def database_porf(zipcode, date, porf):
     
     date = get_date_str(date)
     url_database += "&q=" + str(zipcode) + "&dt=" + date
+
     response = requests.get(url_database)
     data_porf= response.json()
     # print(json.dumps(response.json(), indent=3))
@@ -193,15 +234,10 @@ def weather_getter(zip):
     # try to get date from data
 
 
-def get_date_str(date):
-    # This function returns string of date formatted YYYY-MM-DD
-    return str(date)[0:10]
-
-
 def get_decision(date):
     # This method returns the decision by the user
     # FIX-ME: Should it loop until valid input?
-    print("Pleese select one of the following options:")
+    print("Please select one of the following options:")
     str_date = get_date_str(date)
     print(f"1) Get more data on {str_date}")
     print("2) Choose a different date")
@@ -214,7 +250,7 @@ def get_decision(date):
 
 def more_data(zipcode):
     options = ["Alerts", "Astronomy", "Air quality"]
-    print("Pleese select one of the following options:")
+    print("Please select one of the following options:")
     for i, option in enumerate(options):
         print(f'{i+1}) {option}')
     # FIX-ME: Invalid input: '' or longer than 1 character or not 1,2, or 3
@@ -244,7 +280,7 @@ def leave_program_message():
 
 def main():
 
-    print("\nWelcome to Better Weather!!!\n")
+    print("\nWelcome to Whenever Weather!!!\n")
     zipcode = input("Please enter your zipcode: ")
     print()
     date = current_date
@@ -272,4 +308,4 @@ def main():
         else:
             pass
 
-main()
+# main()
