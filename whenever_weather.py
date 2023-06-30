@@ -40,21 +40,35 @@ def database_astro(zipcode, date):
     print(test[starts:])
     print('\n')
 
-database_astro(11234, datec)
-
 def database_alerts(zipcode):
     url_database = "https://api.weatherapi.com/v1/forecast.json?key=3c978d81b1e84cfc836183128232706"
     url_database += "&q=" + str(zipcode)  + "&alerts=yes"
-    # + "&dt=" + date
     response = requests.get(url_database)
-    # print(json.dumps(response.json(), indent=3))
-    alerts = response.json()
-    data_alerts = pd.DataFrame()
-    # data_alerts = pd.json_normalize(akerts['astronomy']['astro'])
+    # print(json.dumps(response.json()['alerts']['alert'], indent=3))
+    alerts = response.json()['alerts']['alert']
+    is_alerted = False
+    for i in range(len(alerts)):
+        is_alerted = True
+        print("ALERT: ", (i+1))
+        print("Headline: ", alerts[i]['headline'])
+        print("Severity: ", alerts[i]['severity'])
+        print("Urgency: ", alerts[i]['urgency'])
+        print("Areas: ", alerts[i]['areas'])
+        print("Category: ", alerts[i]['category'])
+        print("Certainty: ", alerts[i]['certainty'])
+        print("Event: ", alerts[i]['event'])
+        print("Note: ", alerts[i]['note'])
+        print("Effective: ", alerts[i]['effective'])
+        print("Expires: ", alerts[i]['expires'])
+        print('\n')
+        print("Desc: ", alerts[i]['desc'])
+        if alerts[i]['instruction'] != "":
+            print('\n')
+            print("Instruction: ", alerts[i]['instruction'])
+        print('\n')
+    if not is_alerted:
+        print("No Alerts")
 
-    # data_alerts = data_alerts.applymap(json.dumps)
-
-database_alerts(11234)
 
 def database_aqi(zipcode):
     url_database = "https://api.weatherapi.com/v1/forecast.json?key=3c978d81b1e84cfc836183128232706"
@@ -73,7 +87,6 @@ def database_aqi(zipcode):
     print(test[starts:])
     print('\n')
 
-database_aqi(11234)
 # future automatically does 3 hour intervals but history does every hour so I made history do 3 hour intervals as well just to match
 
 def database_porf(zipcode, date, porf):
@@ -103,14 +116,6 @@ def database_porf(zipcode, date, porf):
 
     data_location = data_location.applymap(json.dumps)
     data_forecast_day = data_forecast_day.applymap(json.dumps)
-    # data_astro = data_astro.applymap(json.dumps)
-    # data_astro = [data_astro[i] for i in data_astro]
-    # # print(data_astro)
-
-    # headers = ['sunrise', 'sunset', 'moonrise', 'moonset', 'moonphase', 'moonillumination', 'is_moon_up', 'is_sun_up']
-    # test = str(pd.DataFrame(data_astro, headers))
-    # starts = test.find('0') +1
-    # print(test[starts:])
 
     data_location.to_sql('location', con=engine, if_exists='replace', index=False)
     data_forecast_day.to_sql('day', con=engine, if_exists='replace', index=False)
@@ -119,15 +124,12 @@ def database_porf(zipcode, date, porf):
     with engine.connect() as connection:
         query_result = connection.execute(db.text("SELECT name, region, country, lat, lon, localtime FROM location;")).fetchall()
         print(pd.DataFrame(query_result))
-        print("Done1")
+        print("\n")
         query_result = connection.execute(db.text("SELECT * FROM day;")).fetchall()
         print(pd.DataFrame(query_result).iloc[0,14])
         query_result = connection.execute(db.text("SELECT maxtemp_f, mintemp_f, avgtemp_f, maxwind_mph, totalprecip_in, avgvis_miles, avghumidity, uv FROM day;")).fetchall()
         print(pd.DataFrame(query_result))
-        print("Done2")
-        # query_result = connection.execute(db.text("SELECT * FROM astro;")).fetchall()
-        # print(pd.DataFrame(query_result))
-        # print("Done3")
+        print("\n")
 
     data_hour = pd.DataFrame()
     if porf == 1:
@@ -140,7 +142,7 @@ def database_porf(zipcode, date, porf):
                 print(pd.DataFrame(query_result).iloc[0,32])
                 query_result = connection.execute(db.text("SELECT time, temp_f, is_day, uv, wind_mph, wind_degree, wind_dir, precip_in, humidity, cloud, feelslike_f, windchill_f, will_it_rain, will_it_snow, vis_miles FROM hour" + str(i) + ";")).fetchall()
                 print(pd.DataFrame(query_result))
-                print("Done HOUR: ", i)
+                print("\n")
     elif porf == 2:
         for i in range(0,8):
             data_hour = pd.json_normalize(data_porf['forecast']['forecastday'][0]['hour'][i]) 
@@ -151,7 +153,7 @@ def database_porf(zipcode, date, porf):
                 print(pd.DataFrame(query_result).iloc[0,31])
                 query_result = connection.execute(db.text("SELECT time, temp_f, is_day, wind_mph, wind_degree, wind_dir, precip_in, humidity, cloud, feelslike_f, windchill_f, will_it_rain, will_it_snow, vis_miles FROM hour" + str(i) + ";")).fetchall()
                 print(pd.DataFrame(query_result))
-                print("Done HOUR: ", i)
+                print("\n")
 
 # database_porf(zipcode, datep, 1)
 
@@ -201,29 +203,25 @@ def database_creater(zipcode, time_range):
     with engine.connect() as connection:
         query_result = connection.execute(db.text("SELECT name, region, country, lat, lon, localtime FROM location;")).fetchall()
         print(pd.DataFrame(query_result))
-        print("DONE1")
+        print("\n")
         query_result = connection.execute(db.text("SELECT * FROM curr;")).fetchall()
         print(pd.DataFrame(query_result).iloc[0,22])
         query_result = connection.execute(db.text("SELECT last_updated, temp_f, is_day, uv, wind_mph, wind_degree, wind_dir, gust_mph, precip_in, humidity, cloud, feelslike_f, vis_miles FROM curr;")).fetchall()
         print(pd.DataFrame(query_result))
-        print("DONE2")
+        print("\n")
         for m in range(time_range):
             query_result = connection.execute(db.text("SELECT * FROM day" + str(m) + ";")).fetchall()
             print(pd.DataFrame(query_result).iloc[0,14])
             query_result = connection.execute(db.text("SELECT maxtemp_f, mintemp_f, avgtemp_f, maxwind_mph, totalprecip_in, avgvis_miles, avghumidity, uv FROM day" + str(m) + ";")).fetchall()
             print(pd.DataFrame(query_result))
-            print("DONE_", m)
-            # query_result = connection.execute(db.text("SELECT * FROM astro" + str(j) + ";")).fetchall()
-            # print(pd.DataFrame(query_result))
-            # query_result = connection.execute(db.text("SELECT sunset, moonrise FROM astro" + str(j) + ";")).fetchall()
-            # print(pd.DataFrame(query_result))
-            # print("DONE_", j)
+            print("\n")
+
             for n in range(0,24,3):
                 query_result = connection.execute(db.text("SELECT * FROM hour" + str(m) + "_" + str(n) + ";")).fetchall()             
                 print(pd.DataFrame(query_result).iloc[0,32])
                 query_result = connection.execute(db.text("SELECT time, temp_f, is_day, uv, wind_mph, wind_degree, wind_dir, precip_in, humidity, cloud, feelslike_f, windchill_f, will_it_rain, will_it_snow, vis_miles FROM hour" + str(m) + "_" + str(n) + ";")).fetchall()
                 print(pd.DataFrame(query_result))
-                print("Done HOUR: ", n)
+                print("\n")
 # database_creater(11234, 3)
 
 def weather_getter(zip):
@@ -248,14 +246,19 @@ def get_decision(date):
     return int(decision)
 
 
-def more_data(zipcode):
+def more_data(zipcode, date):
     options = ["Alerts", "Astronomy", "Air quality"]
     print("Please select one of the following options:")
     for i, option in enumerate(options):
         print(f'{i+1}) {option}')
     # FIX-ME: Invalid input: '' or longer than 1 character or not 1,2, or 3
-    decision = input("Enter 2: ")
-    database_astro(zipcode)
+    decision = int(input("Enter the number of your choice: "))
+    if decision == 1:
+        database_alerts(zipcode)
+    elif decision == 2:
+        database_astro(zipcode, date)       
+    elif decision == 3:
+        database_aqi(zipcode)
     # to-do 
 
 
@@ -296,7 +299,7 @@ def main():
 
         # TO-DO: either make a function for each decision or make functionality
         if decision == 1:
-            more_data(zipcode)
+            more_data(zipcode, date)
         elif decision == 2:
             new_date,porf = get_new_date()
             date = new_date
@@ -308,4 +311,4 @@ def main():
         else:
             pass
 
-# main()
+main()
