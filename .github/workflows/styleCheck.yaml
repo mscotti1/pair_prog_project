@@ -16,5 +16,5 @@ jobs:
         run: python -m pip install --upgrade pip pycodestyle
 
       - name: Check Style
-        run: pycodestyle --exclude=weather_conditions.py whenever_methods.py whenever_weather.py test_whenever.py
+        run: pycodestyle --exclude=weather_conditions.py whenever_methods.py --exclude=whenever_weather.py test_whenever.py
 
