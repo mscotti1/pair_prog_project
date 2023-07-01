@@ -1,6 +1,6 @@
 import unittest
 import datetime
-from whenever_weather import get_date_str
+from whenever_methods import get_date_str
 
 
 
